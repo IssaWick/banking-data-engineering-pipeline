@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+
+# Data files
+*.csv
+*.parquet
+*.xlsx
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Airflow
+airflow/logs/
+airflow/airflow.db
+
+# dbt
+dbt/target/
+dbt/logs/
+
+# Python distribution
+build/
+dist/
+*.egg-info/
