@@ -42,3 +42,6 @@ dbt/logs/
 build/
 dist/
 *.egg-info/
+
+# Ignore generated quality report
+/data/processed/quality_report.json
