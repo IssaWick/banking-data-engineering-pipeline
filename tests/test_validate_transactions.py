@@ -99,3 +99,64 @@ def test_missing_required_column_fails(output_paths):
 
     with pytest.raises(ValueError, match="Missing required columns"):
         validator.validate_transactions()
+
+
+def test_invalid_timestamp_is_rejected(output_paths):
+    source, processed_dir = output_paths
+
+    transaction = make_transaction()
+    transaction["transaction_timestamp"] = "not-a-timestamp"
+
+    pd.DataFrame([transaction]).to_csv(source, index=False)
+
+    valid_count, rejected_count = validator.validate_transactions()
+
+    assert valid_count == 0
+    assert rejected_count == 1
+
+    rejected = pd.read_csv(processed_dir / "rejected.csv")
+    assert (
+        "invalid_transaction_timestamp"
+        in rejected.iloc[0]["rejection_reason"]
+    )
+
+
+def test_unsupported_currency_is_rejected(output_paths):
+    source, processed_dir = output_paths
+
+    transaction = make_transaction()
+    transaction["currency"] = "USD"
+
+    pd.DataFrame([transaction]).to_csv(source, index=False)
+
+    valid_count, rejected_count = validator.validate_transactions()
+
+    assert valid_count == 0
+    assert rejected_count == 1
+
+    rejected = pd.read_csv(processed_dir / "rejected.csv")
+    assert (
+        "unsupported_currency"
+        in rejected.iloc[0]["rejection_reason"]
+    )
+
+
+def test_multiple_errors_are_reported(output_paths):
+    source, processed_dir = output_paths
+
+    transaction = make_transaction()
+    transaction["amount"] = "-500"
+    transaction["transaction_timestamp"] = "invalid"
+
+    pd.DataFrame([transaction]).to_csv(source, index=False)
+
+    valid_count, rejected_count = validator.validate_transactions()
+
+    assert valid_count == 0
+    assert rejected_count == 1
+
+    rejected = pd.read_csv(processed_dir / "rejected.csv")
+    reason = rejected.iloc[0]["rejection_reason"]
+
+    assert "invalid_amount" in reason
+    assert "invalid_transaction_timestamp" in reason
