@@ -1,9 +1,8 @@
-
 import argparse
 from pathlib import Path
 
+import math
 import pandas as pd
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -92,6 +91,28 @@ def validate_transactions() -> tuple[int, int]:
     )
     reject(duplicate_ids, "duplicate_transaction_id")
 
+    # Transaction IDs must follow TXN000001 format.
+    invalid_transaction_id = (
+        has_id
+        & ~transaction_ids.str.fullmatch(r"TXN\d{6}")
+    )
+    reject(
+        invalid_transaction_id,
+        "invalid_transaction_id_format",
+    )
+
+    # Account IDs must follow ACC0001 format.
+    account_ids = df["account_id"].str.strip()
+
+    invalid_account_id = (
+        account_ids.ne("")
+        & ~account_ids.str.fullmatch(r"ACC\d{4}")
+    )
+    reject(
+        invalid_account_id,
+        "invalid_account_id_format",
+    )
+
     # 3. Timestamps must be parseable.
     timestamps = pd.to_datetime(
         df["transaction_timestamp"],
@@ -103,9 +124,30 @@ def validate_transactions() -> tuple[int, int]:
     reject(invalid_timestamp, "invalid_transaction_timestamp")
 
     # 4. Amounts must be numeric and greater than zero.
-    amounts = pd.to_numeric(df["amount"], errors="coerce")
+    # Amounts must be finite, positive, and have at most
+    # two decimal places.
+    amounts = pd.to_numeric(
+        df["amount"],
+        errors="coerce",
+    )
 
-    invalid_amount = amounts.isna() | amounts.le(0)
+    finite_amounts = amounts.map(
+        lambda value: (
+            pd.notna(value) and math.isfinite(value)
+        )
+    )
+
+    valid_amount_format = df["amount"].str.fullmatch(
+        r"\d+(\.\d{1,2})?"
+    )
+
+    invalid_amount = (
+        amounts.isna()
+        | ~finite_amounts
+        | amounts.le(0)
+        | ~valid_amount_format
+    )
+
     reject(invalid_amount, "invalid_amount")
 
     # 5. Categorical fields must contain allowed values.
