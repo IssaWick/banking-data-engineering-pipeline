@@ -45,3 +45,6 @@ dist/
 
 # Ignore generated quality report
 /data/processed/quality_report.json
+
+# Pipeline execution logs
+logs/
