@@ -5,12 +5,22 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ingestion.generate_transactions import generate_transactions
-from ingestion.profile_transactions import profile_transactions
-from validation.validate_transactions import validate_transactions
-from validation.data_quality_report import run_quality_report
-from pipeline_logging import configure_logging
+try:
+    # Imports when run as a module or imported by tests.
+    from .ingestion.generate_transactions import generate_transactions
+    from .ingestion.profile_transactions import profile_transactions
+    from .validation.validate_transactions import validate_transactions
+    from .validation.data_quality_report import run_quality_report
+    from .pipeline_logging import configure_logging
 
+except ImportError:
+    # Imports when executed directly:
+    # python src/run_pipeline.py
+    from ingestion.generate_transactions import generate_transactions
+    from ingestion.profile_transactions import profile_transactions
+    from validation.validate_transactions import validate_transactions
+    from validation.data_quality_report import run_quality_report
+    from pipeline_logging import configure_logging
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 LOG_FILE = PROJECT_ROOT / "logs" / "pipeline.log"
